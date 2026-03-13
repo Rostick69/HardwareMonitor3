@@ -130,21 +130,6 @@ HardwareMonitor/
 
 <img width="979" height="687" alt="image" src="https://github.com/user-attachments/assets/038fca7c-29ca-4a40-97af-5a0097326e2b" />
 
-
-(Здесь можно добавить скриншоты, если сделаешь папку screenshots и положишь туда картинки)
-
-Измерение производительности
-Среднее время выполнения WMI-запросов:
-
-Запрос	Время, мс
-Win32_Processor	150–250
-Win32_PerfFormattedData_PerfOS_Processor	50–100
-Win32_OperatingSystem + Win32_PhysicalMemory	100–200
-Win32_DiskDrive + Win32_LogicalDisk	200–400
-Win32_VideoController	50–150
-Win32_NetworkAdapter	80–200
-Process.GetProcesses() + расчёт CPU	30–80
-
 Возможные улучшения
 
 1. Добавить график загрузки процессора в реальном времени
