@@ -51,9 +51,13 @@ WPF-приложение для мониторинга аппаратного о
 ## Архитектура проекта
 
 HardwareMonitor/
+
 ├── Models/ # Классы данных
+
 │ ├── CpuInfo.cs
+
 │ ├── MemoryInfo.cs
+
 │ ├── DiskInfo.cs
 │ ├── VideoControllerInfo.cs
 │ ├── NetworkAdapterInfo.cs
