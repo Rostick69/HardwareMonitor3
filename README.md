@@ -59,27 +59,49 @@ HardwareMonitor/
 │ ├── MemoryInfo.cs
 
 │ ├── DiskInfo.cs
+
 │ ├── VideoControllerInfo.cs
+
 │ ├── NetworkAdapterInfo.cs
+
 │ ├── SystemInfo.cs
+
 │ └── ProcessInfoModel.cs
+
 ├── Services/ # Сервисы для работы с WMI
+
 │ ├── CpuMonitor.cs
+
 │ ├── MemoryMonitor.cs
+
 │ ├── DiskMonitor.cs
+
 │ ├── VideoMonitor.cs
+
 │ ├── NetworkMonitor.cs
+
 │ ├── SystemInfoService.cs
+
 │ └── ProcessMonitor.cs
+
 ├── ViewModels/ # ViewModel и команды
+
 │ ├── BaseViewModel.cs
+
 │ ├── RelayCommand.cs
+
 │ └── MainViewModel.cs
+
 ├── Views/ # Окна
+
 │ └── MainWindow.xaml
+
 ├── Converters/ # Конвертеры для отображения байтов
+
 │ └── BytesToMBConverter.cs
+
 └── Utils/ # Вспомогательные сервисы
+
 └── ExportService.cs
 
 
@@ -101,3 +123,39 @@ HardwareMonitor/
 4. Выполнить сборку (Build → Build Solution)
 
 5. Запустить приложение (F5)
+
+Примеры работы
+
+Главное окно
+
+<img width="979" height="687" alt="image" src="https://github.com/user-attachments/assets/038fca7c-29ca-4a40-97af-5a0097326e2b" />
+
+
+(Здесь можно добавить скриншоты, если сделаешь папку screenshots и положишь туда картинки)
+
+Измерение производительности
+Среднее время выполнения WMI-запросов:
+
+Запрос	Время, мс
+Win32_Processor	150–250
+Win32_PerfFormattedData_PerfOS_Processor	50–100
+Win32_OperatingSystem + Win32_PhysicalMemory	100–200
+Win32_DiskDrive + Win32_LogicalDisk	200–400
+Win32_VideoController	50–150
+Win32_NetworkAdapter	80–200
+Process.GetProcesses() + расчёт CPU	30–80
+
+Возможные улучшения
+
+1. Добавить график загрузки процессора в реальном времени
+
+2. Сделать настраиваемый интервал обновления
+
+3. Реализовать тёмную тему оформления
+
+4. Добавить мониторинг температуры (требует OpenHardwareMonitor)
+
+Автор
+Студент группы Б.ИВТ.ПРОМ.23.01 Ростовцев Д. А.
+Тверской государственный технический университет (ТвГТУ), 2026
+
