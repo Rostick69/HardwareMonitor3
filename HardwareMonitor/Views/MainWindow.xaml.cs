@@ -13,3 +13,4 @@ namespace HardwareMonitor.Views
         }
     }
 }
+// Типа коммит
