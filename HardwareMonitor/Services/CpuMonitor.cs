@@ -17,7 +17,7 @@ namespace HardwareMonitor.Services
         {
             CpuInfo cpuInfo = new CpuInfo();
             string query = "SELECT Name, NumberOfCores, NumberOfLogicalProcessors, " +
-                           "MaxClockSpeed, Manufacturer, Architecture FROM Win32_Processor";
+                           "MaxClockSpeed, CurrentClockSpeed, Manufacturer, Architecture FROM Win32_Processor";
 
             try
             {
@@ -25,15 +25,24 @@ namespace HardwareMonitor.Services
                 {
                     foreach (ManagementObject processor in searcher.Get())
                     {
-                        cpuInfo.Name = processor["Name"]?.ToString() ?? "Неизвестно";
+                        cpuInfo.Name = processor["Name"]?.ToString().Trim() ?? "Неизвестно";
                         cpuInfo.CoreCount = Convert.ToInt32(processor["NumberOfCores"] ?? 0);
                         cpuInfo.ThreadCount = Convert.ToInt32(processor["NumberOfLogicalProcessors"] ?? 0);
                         cpuInfo.BaseFrequency = Convert.ToInt32(processor["MaxClockSpeed"] ?? 0);
+                        // CurrentClockSpeed на многих системах равен базовой частоте — WMI даёт приблизительное значение
+                        cpuInfo.CurrentFrequency = Convert.ToInt32(processor["CurrentClockSpeed"] ?? 0);
                         cpuInfo.Manufacturer = processor["Manufacturer"]?.ToString() ?? "Неизвестно";
 
-                        // Архитектура: 0 = x86, 9 = x64
+                        // Архитектура: 0 = x86, 5 = ARM, 9 = x64, 12 = ARM64
                         int arch = Convert.ToInt32(processor["Architecture"] ?? 0);
-                        cpuInfo.Architecture = (arch == 9) ? "x64" : "x86";
+                        switch (arch)
+                        {
+                            case 0: cpuInfo.Architecture = "x86"; break;
+                            case 5: cpuInfo.Architecture = "ARM"; break;
+                            case 9: cpuInfo.Architecture = "x64"; break;
+                            case 12: cpuInfo.Architecture = "ARM64"; break;
+                            default: cpuInfo.Architecture = $"Другая ({arch})"; break;
+                        }
                         break; // Берём только первый процессор
                     }
                 }

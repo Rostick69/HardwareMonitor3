@@ -13,6 +13,9 @@ namespace HardwareMonitor.Models
         // Доступный объем памяти в байтах
         public long AvailableMemoryBytes { get; set; }
 
+        // Используемый объем памяти в байтах (всего минус доступно)
+        public long UsedMemoryBytes => TotalMemoryBytes - AvailableMemoryBytes;
+
         // Список установленных модулей памяти
         public List<MemoryModule> Modules { get; set; }
 

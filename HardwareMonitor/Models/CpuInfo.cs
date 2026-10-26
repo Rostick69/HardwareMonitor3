@@ -19,6 +19,9 @@ namespace HardwareMonitor.Models
         // Базовая частота процессора в МГц
         public int BaseFrequency { get; set; }
 
+        // Текущая частота процессора в МГц (определяется приблизительно, зависит от поддержки WMI)
+        public int CurrentFrequency { get; set; }
+
         // Текущая загрузка процессора в процентах
         public double LoadPercentage { get; set; }
 
