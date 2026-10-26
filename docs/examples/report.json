@@ -1,0 +1,846 @@
+﻿{
+  "ExportDate": "2026-10-26T18:13:15.1300658+03:00",
+  "Cpu": {
+    "Name": "AMD Ryzen 5 5600 6-Core Processor",
+    "CoreCount": 6,
+    "ThreadCount": 12,
+    "BaseFrequency": 3501,
+    "CurrentFrequency": 3501,
+    "LoadPercentage": 22.0,
+    "Manufacturer": "AuthenticAMD",
+    "Architecture": "x64"
+  },
+  "Memory": {
+    "TotalMemoryMB": 16294,
+    "UsedMemoryMB": 9488,
+    "AvailableMemoryMB": 6805,
+    "UsagePercent": 58.233022612224474,
+    "Modules": [
+      {
+        "Manufacturer": "Kingston",
+        "CapacityBytes": 8589934592,
+        "SpeedMHz": 3200
+      },
+      {
+        "Manufacturer": "Kingston",
+        "CapacityBytes": 8589934592,
+        "SpeedMHz": 3200
+      }
+    ]
+  },
+  "Disks": {
+    "Physical": [
+      {
+        "Model": "KINGSTON SNVS1000G",
+        "SizeBytes": 1000202273280,
+        "MediaType": "Fixed hard disk media"
+      }
+    ],
+    "Logical": [
+      {
+        "DriveLetter": "C:",
+        "TotalSizeBytes": 998972059648,
+        "FreeSizeBytes": 194239508480,
+        "FileSystem": "NTFS",
+        "UsagePercent": 80.5560619434699
+      }
+    ]
+  },
+  "Video": {
+    "Name": "NVIDIA GeForce RTX 3060 Ti",
+    "VideoMemoryBytes": 8589934592,
+    "DriverVersion": "32.0.16.1664",
+    "CurrentRefreshRate": 164,
+    "VideoModeDescription": "2560 × 1440"
+  },
+  "Network": [
+    {
+      "Name": "Realtek Gaming 2.5GbE Family Controller",
+      "MacAddress": "58:11:22:97:9A:78",
+      "IsConnected": true,
+      "ConnectedText": "Да",
+      "SpeedBitsPerSec": 1000000000,
+      "SpeedMbps": 1000.0
+    },
+    {
+      "Name": "sing-tun Tunnel",
+      "MacAddress": "Неизвестно",
+      "IsConnected": true,
+      "ConnectedText": "Да",
+      "SpeedBitsPerSec": 100000000000,
+      "SpeedMbps": 100000.0
+    }
+  ],
+  "System": {
+    "OsName": "Microsoft Windows 11 Pro",
+    "OsVersion": "10.0.26200",
+    "Architecture": "64-bit",
+    "ComputerName": "ROSTICK",
+    "UserName": "Rostick"
+  },
+  "Processes": [
+    {
+      "Id": 3088,
+      "Name": "claude",
+      "Status": "Запущен",
+      "CpuUsage": 5.2,
+      "MemoryMB": 137.28515625
+    },
+    {
+      "Id": 21836,
+      "Name": "claude",
+      "Status": "Запущен",
+      "CpuUsage": 4.5,
+      "MemoryMB": 293.69921875
+    },
+    {
+      "Id": 25784,
+      "Name": "BackgroundDownload",
+      "Status": "Запущен",
+      "CpuUsage": 1.2,
+      "MemoryMB": 255.48046875
+    },
+    {
+      "Id": 26148,
+      "Name": "HardwareMonitor",
+      "Status": "Запущен",
+      "CpuUsage": 1.2,
+      "MemoryMB": 102.265625
+    },
+    {
+      "Id": 23784,
+      "Name": "claude",
+      "Status": "Запущен",
+      "CpuUsage": 1.1,
+      "MemoryMB": 522.21875
+    },
+    {
+      "Id": 3320,
+      "Name": "claude",
+      "Status": "Запущен",
+      "CpuUsage": 0.9,
+      "MemoryMB": 136.73046875
+    },
+    {
+      "Id": 9280,
+      "Name": "steamwebhelper",
+      "Status": "Запущен",
+      "CpuUsage": 0.1,
+      "MemoryMB": 153.546875
+    },
+    {
+      "Id": 9184,
+      "Name": "explorer",
+      "Status": "Запущен",
+      "CpuUsage": 0.1,
+      "MemoryMB": 323.5
+    },
+    {
+      "Id": 16104,
+      "Name": "ctfmon",
+      "Status": "Запущен",
+      "CpuUsage": 0.1,
+      "MemoryMB": 31.46484375
+    },
+    {
+      "Id": 19824,
+      "Name": "unsecapp",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 10.94921875
+    },
+    {
+      "Id": 13784,
+      "Name": "ArmouryCrate",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 61.234375
+    },
+    {
+      "Id": 18504,
+      "Name": "Docker Desktop",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 11.609375
+    },
+    {
+      "Id": 13756,
+      "Name": "conhost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 7.0390625
+    },
+    {
+      "Id": 15908,
+      "Name": "conhost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 6.91796875
+    },
+    {
+      "Id": 9620,
+      "Name": "claude",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 134.73046875
+    },
+    {
+      "Id": 15620,
+      "Name": "com.docker.backend",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 62.9609375
+    },
+    {
+      "Id": 5808,
+      "Name": "conhost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 7.125
+    },
+    {
+      "Id": 10724,
+      "Name": "msedgewebview2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 6.7890625
+    },
+    {
+      "Id": 8568,
+      "Name": "NVIDIA Broadcast",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 192.078125
+    },
+    {
+      "Id": 15020,
+      "Name": "RuntimeBroker",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 10.015625
+    },
+    {
+      "Id": 10704,
+      "Name": "NVIDIA Broadcast",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 75.2734375
+    },
+    {
+      "Id": 5100,
+      "Name": "devenv",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 779.16015625
+    },
+    {
+      "Id": 13288,
+      "Name": "nvcontainer",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 73.45703125
+    },
+    {
+      "Id": 16732,
+      "Name": "steamwebhelper",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 19.671875
+    },
+    {
+      "Id": 22320,
+      "Name": "dllhost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 11.56640625
+    },
+    {
+      "Id": 25752,
+      "Name": "smartscreen",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 12.71875
+    },
+    {
+      "Id": 12388,
+      "Name": "UserOOBEBroker",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 10.3671875
+    },
+    {
+      "Id": 17576,
+      "Name": "asus_framework",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 3.67578125
+    },
+    {
+      "Id": 3332,
+      "Name": "claude",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 70.171875
+    },
+    {
+      "Id": 4524,
+      "Name": "PerfWatson2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 68.375
+    },
+    {
+      "Id": 17552,
+      "Name": "NVIDIA Broadcast",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 76.4453125
+    },
+    {
+      "Id": 8540,
+      "Name": "DefenderSessionHelper",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 5.1015625
+    },
+    {
+      "Id": 8496,
+      "Name": "GameInputRedistService",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 16.70703125
+    },
+    {
+      "Id": 9356,
+      "Name": "NoiseCancelingEngine",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 4.390625
+    },
+    {
+      "Id": 17544,
+      "Name": "asus_framework",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 3.3046875
+    },
+    {
+      "Id": 12684,
+      "Name": "ArmourySwAgent",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 1.1796875
+    },
+    {
+      "Id": 21364,
+      "Name": "BackgroundDownload",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 109.94921875
+    },
+    {
+      "Id": 14948,
+      "Name": "msedgewebview2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 87.375
+    },
+    {
+      "Id": 9344,
+      "Name": "DevHub",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 342.69921875
+    },
+    {
+      "Id": 16668,
+      "Name": "steamwebhelper",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 30.0625
+    },
+    {
+      "Id": 13624,
+      "Name": "conhost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 7.16796875
+    },
+    {
+      "Id": 13216,
+      "Name": "nvcontainer",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 18.5625
+    },
+    {
+      "Id": 21752,
+      "Name": "Docker Desktop",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 113.24609375
+    },
+    {
+      "Id": 17092,
+      "Name": "asus_framework",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 12.265625
+    },
+    {
+      "Id": 18392,
+      "Name": "ShellExperienceHost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 75.6640625
+    },
+    {
+      "Id": 10188,
+      "Name": "msedgewebview2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 2.28125
+    },
+    {
+      "Id": 21208,
+      "Name": "Docker Desktop",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 53.1484375
+    },
+    {
+      "Id": 20220,
+      "Name": "com.docker.build",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 28.20703125
+    },
+    {
+      "Id": 15780,
+      "Name": "msedgewebview2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 3.62109375
+    },
+    {
+      "Id": 18796,
+      "Name": "Aac3572MbHal_x86",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 11.63671875
+    },
+    {
+      "Id": 2416,
+      "Name": "asus_framework",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 2.18359375
+    },
+    {
+      "Id": 11988,
+      "Name": "DevHub",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 171.85546875
+    },
+    {
+      "Id": 3704,
+      "Name": "MoNotificationUx",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 13.734375
+    },
+    {
+      "Id": 12752,
+      "Name": "claude",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 35.06640625
+    },
+    {
+      "Id": 9648,
+      "Name": "PerfWatson2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 82.453125
+    },
+    {
+      "Id": 1952,
+      "Name": "ShellHost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 54.79296875
+    },
+    {
+      "Id": 24352,
+      "Name": "claude",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 104.7890625
+    },
+    {
+      "Id": 23592,
+      "Name": "claude",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 80.31640625
+    },
+    {
+      "Id": 11848,
+      "Name": "RuntimeBroker",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 49.4375
+    },
+    {
+      "Id": 9256,
+      "Name": "AcPowerNotification",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 11.046875
+    },
+    {
+      "Id": 11840,
+      "Name": "svchost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 15.78515625
+    },
+    {
+      "Id": 23044,
+      "Name": "msedgewebview2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 15.171875
+    },
+    {
+      "Id": 9248,
+      "Name": "devenv",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 816.9375
+    },
+    {
+      "Id": 19584,
+      "Name": "Happ",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 128.375
+    },
+    {
+      "Id": 13544,
+      "Name": "msedgewebview2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 103.83984375
+    },
+    {
+      "Id": 12228,
+      "Name": "Widgets",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 55.49609375
+    },
+    {
+      "Id": 18884,
+      "Name": "lghub_system_tray",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 71.44921875
+    },
+    {
+      "Id": 9196,
+      "Name": "svchost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 6.94921875
+    },
+    {
+      "Id": 12984,
+      "Name": "msedgewebview2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 12.4140625
+    },
+    {
+      "Id": 8756,
+      "Name": "msedgewebview2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 4.91015625
+    },
+    {
+      "Id": 23408,
+      "Name": "conhost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 6.51953125
+    },
+    {
+      "Id": 18228,
+      "Name": "MSBuild",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 32.609375
+    },
+    {
+      "Id": 10032,
+      "Name": "CrossDeviceResume",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 51.67578125
+    },
+    {
+      "Id": 23392,
+      "Name": "xray",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 38.9921875
+    },
+    {
+      "Id": 15296,
+      "Name": "msedgewebview2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 18.8828125
+    },
+    {
+      "Id": 21164,
+      "Name": "Docker Desktop",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 83.41015625
+    },
+    {
+      "Id": 10452,
+      "Name": "svchost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 25.87109375
+    },
+    {
+      "Id": 9588,
+      "Name": "taskhostw",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 20.54296875
+    },
+    {
+      "Id": 19496,
+      "Name": "steamwebhelper",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 79.21875
+    },
+    {
+      "Id": 1392,
+      "Name": "MSBuild",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 87.30078125
+    },
+    {
+      "Id": 13888,
+      "Name": "msedgewebview2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 11.69140625
+    },
+    {
+      "Id": 17328,
+      "Name": "asus_framework",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 3.0546875
+    },
+    {
+      "Id": 15172,
+      "Name": "msedgewebview2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 57.921875
+    },
+    {
+      "Id": 11816,
+      "Name": "VBCSCompiler",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 139.0234375
+    },
+    {
+      "Id": 2236,
+      "Name": "RuntimeBroker",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 9.9140625
+    },
+    {
+      "Id": 15148,
+      "Name": "msedgewebview2",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 38.30078125
+    },
+    {
+      "Id": 9116,
+      "Name": "svchost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 22.73046875
+    },
+    {
+      "Id": 9976,
+      "Name": "ArmouryCrate.UserSessionHelper",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 60.9296875
+    },
+    {
+      "Id": 16244,
+      "Name": "Docker Desktop",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 109.94921875
+    },
+    {
+      "Id": 3504,
+      "Name": "steamwebhelper",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 71.34375
+    },
+    {
+      "Id": 9968,
+      "Name": "conhost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 6.11328125
+    },
+    {
+      "Id": 19124,
+      "Name": "com.docker.backend",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 126.3046875
+    },
+    {
+      "Id": 14828,
+      "Name": "steam",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 83.52734375
+    },
+    {
+      "Id": 16856,
+      "Name": "steamwebhelper",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 412.23828125
+    },
+    {
+      "Id": 19008,
+      "Name": "lghub_agent",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 62.75
+    },
+    {
+      "Id": 20300,
+      "Name": "NVIDIA Broadcast",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 107.4375
+    },
+    {
+      "Id": 16420,
+      "Name": "asus_framework",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 3.52734375
+    },
+    {
+      "Id": 24144,
+      "Name": "docker-agent",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 49.08984375
+    },
+    {
+      "Id": 20292,
+      "Name": "NVIDIA Broadcast",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 78.1484375
+    },
+    {
+      "Id": 12100,
+      "Name": "StartMenuExperienceHost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 129.7109375
+    },
+    {
+      "Id": 18516,
+      "Name": "RuntimeBroker",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 22.23046875
+    },
+    {
+      "Id": 8648,
+      "Name": "svchost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 41.40625
+    },
+    {
+      "Id": 9508,
+      "Name": "claude",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 104.84375
+    },
+    {
+      "Id": 9452,
+      "Name": "ArmourySocketServer",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 1.640625
+    },
+    {
+      "Id": 9072,
+      "Name": "sihost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 46.1875
+    },
+    {
+      "Id": 16396,
+      "Name": "NVIDIA Broadcast",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 46.9453125
+    },
+    {
+      "Id": 6328,
+      "Name": "audiodg",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 19.12890625
+    },
+    {
+      "Id": 12940,
+      "Name": "WidgetService",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 25.79296875
+    },
+    {
+      "Id": 12076,
+      "Name": "SearchHost",
+      "Status": "Запущен",
+      "CpuUsage": 0.0,
+      "MemoryMB": 117.78515625
+    }
+  ]
+}
