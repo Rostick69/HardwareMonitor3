@@ -1,23 +1,30 @@
 ﻿using HardwareMonitor.Models;
 using HardwareMonitor.Services;
+using Microsoft.Win32;          // для диалогов сохранения
+using Newtonsoft.Json;          // для работы с JSON
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;                // для работы с файлами
 using System.Linq;
+using System.Management;
+using System.Text;              // для кодировки UTF-8
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;     // PointCollection для графика
 using System.Windows.Threading;
-using Microsoft.Win32;          // для диалогов сохранения
-using Newtonsoft.Json;          // для работы с JSON
-using System.IO;                // для работы с файлами
-using System.Text;              // для кодировки UTF-8
 
 namespace HardwareMonitor.ViewModels
 {
     public class MainViewModel : BaseViewModel
     {
+        // Размеры области графика загрузки CPU (в единицах WPF) и число хранимых точек
+        public const double ChartWidth = 600;
+        public const double ChartHeight = 150;
+        private const int ChartPoints = 60;
+
         private readonly CpuMonitor _cpuMonitor;
         private readonly MemoryMonitor _memoryMonitor;
         private readonly DiskMonitor _diskMonitor;
@@ -25,13 +32,20 @@ namespace HardwareMonitor.ViewModels
         private readonly NetworkMonitor _networkMonitor;
         private readonly SystemInfoService _systemInfoService;
         private readonly ProcessMonitor _processMonitor;
-        private DispatcherTimer _updateTimer;
+        private readonly DispatcherTimer _updateTimer;
         private bool _isRefreshing;
+
+        // История загрузки CPU и время последних обновлений (для графика и таблицы производительности)
+        private readonly List<double> _cpuHistory = new List<double>();
+        private readonly List<long> _refreshTimes = new List<long>();
+
+        public ICommand RefreshCommand { get; }
+        public ICommand KillProcessCommand { get; }
         public ICommand ExportTxtCommand { get; }
         public ICommand ExportCsvCommand { get; }
         public ICommand ExportJsonCommand { get; }
 
-
+        #region Данные для отображения
 
         private CpuInfo _cpuInfo;
         public CpuInfo CpuInfo
@@ -75,12 +89,7 @@ namespace HardwareMonitor.ViewModels
             set => SetProperty(ref _systemInfo, value);
         }
 
-        private ObservableCollection<ProcessInfoModel> _processes = new ObservableCollection<ProcessInfoModel>();
-        public ObservableCollection<ProcessInfoModel> Processes
-        {
-            get => _processes;
-            set => SetProperty(ref _processes, value);
-        }
+        public ObservableCollection<ProcessInfoModel> Processes { get; } = new ObservableCollection<ProcessInfoModel>();
 
         private ProcessInfoModel _selectedProcess;
         public ProcessInfoModel SelectedProcess
@@ -89,9 +98,69 @@ namespace HardwareMonitor.ViewModels
             set => SetProperty(ref _selectedProcess, value);
         }
 
-        // Команды
-        public ICommand RefreshCommand { get; }
-        public ICommand KillProcessCommand { get; }
+        // Точки линии графика загрузки CPU
+        private PointCollection _cpuChartPoints = new PointCollection();
+        public PointCollection CpuChartPoints
+        {
+            get => _cpuChartPoints;
+            set => SetProperty(ref _cpuChartPoints, value);
+        }
+
+        #endregion
+
+        #region Настройки обновления и статус
+
+        // Варианты интервала автообновления, секунд (WMI не рассчитан на частый опрос, поэтому не меньше 1 с)
+        public List<int> IntervalOptions { get; } = new List<int> { 1, 2, 3, 5, 10, 30 };
+
+        private int _selectedInterval = 3;
+        public int SelectedInterval
+        {
+            get => _selectedInterval;
+            set
+            {
+                if (SetProperty(ref _selectedInterval, value))
+                    _updateTimer.Interval = TimeSpan.FromSeconds(value);
+            }
+        }
+
+        private bool _isAutoRefresh = true;
+        public bool IsAutoRefresh
+        {
+            get => _isAutoRefresh;
+            set
+            {
+                if (SetProperty(ref _isAutoRefresh, value))
+                {
+                    if (value) _updateTimer.Start();
+                    else _updateTimer.Stop();
+                }
+            }
+        }
+
+        private string _statusText = "Загрузка данных...";
+        public string StatusText
+        {
+            get => _statusText;
+            set => SetProperty(ref _statusText, value);
+        }
+
+        private bool _hasErrors;
+        public bool HasErrors
+        {
+            get => _hasErrors;
+            set => SetProperty(ref _hasErrors, value);
+        }
+
+        private string _refreshStats = "";
+        // Статистика времени обновления: последнее, среднее, минимум и максимум
+        public string RefreshStats
+        {
+            get => _refreshStats;
+            set => SetProperty(ref _refreshStats, value);
+        }
+
+        #endregion
 
         public MainViewModel()
         {
@@ -105,72 +174,133 @@ namespace HardwareMonitor.ViewModels
 
             RefreshCommand = new RelayCommand(async () => await RefreshDataAsync());
             KillProcessCommand = new RelayCommand(KillSelectedProcess, () => SelectedProcess != null);
-
             ExportTxtCommand = new RelayCommand(ExportToTxt);
             ExportCsvCommand = new RelayCommand(ExportToCsv);
             ExportJsonCommand = new RelayCommand(ExportToJson);
 
-            // Таймер для автообновления каждые 3 секунды
-            _updateTimer = new DispatcherTimer();
-            _updateTimer.Interval = TimeSpan.FromSeconds(3);
-            _updateTimer.Tick += async (s, e) =>
-            {
-                if (!_isRefreshing)
-                {
-                    await RefreshDataAsync();
-                }
-            };
+            // Таймер автообновления. DispatcherTimer срабатывает в UI-потоке,
+            // а сам опрос WMI выполняется в фоне через Task.Run
+            _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(_selectedInterval) };
+            _updateTimer.Tick += async (s, e) => await RefreshDataAsync();
             _updateTimer.Start();
-            // Сразу обновляем данные
+
             _ = RefreshDataAsync();
+        }
+
+        /// <summary>
+        /// Безопасный вызов одного сервиса в фоновом потоке.
+        /// Ошибка одного компонента не мешает обновлению остальных — она попадает в список errors
+        /// </summary>
+        private static Task<T> RunSafe<T>(Func<T> func, string component, List<string> errors) where T : class
+        {
+            return Task.Run(() =>
+            {
+                try
+                {
+                    return func();
+                }
+                catch (Exception ex)
+                {
+                    string message = ex.Message;
+                    // Отдельно сообщаем о нехватке прав — некоторые WMI-классы требуют администратора
+                    if (ex is UnauthorizedAccessException || ex.InnerException is UnauthorizedAccessException ||
+                        (ex.InnerException is ManagementException me && me.ErrorCode == ManagementStatus.AccessDenied))
+                        message = "недостаточно прав (запустите программу от имени администратора)";
+                    lock (errors) errors.Add($"{component}: {message}");
+                    return null;
+                }
+            });
         }
 
         // Обновление всех данных
         private async Task RefreshDataAsync()
         {
-            if (_isRefreshing) return; // защита от повторного входа
+            if (_isRefreshing) return; // защита от повторного входа, если предыдущий опрос ещё идёт
             _isRefreshing = true;
+            var stopwatch = Stopwatch.StartNew();
+            var errors = new List<string>();
 
             try
             {
-                var cpuTask = Task.Run(() => _cpuMonitor.GetCpuInfo());
-                var memTask = Task.Run(() => _memoryMonitor.GetMemoryInfo());
-                var diskTask = Task.Run(() => _diskMonitor.GetDiskInfo());
-                var videoTask = Task.Run(() => _videoMonitor.GetVideoInfo());
-                var netTask = Task.Run(() => _networkMonitor.GetNetworkAdapters());
-                var sysTask = Task.Run(() => _systemInfoService.GetSystemInfo());
-                var procTask = Task.Run(() => _processMonitor.GetProcesses());
+                var cpuTask = RunSafe(() => _cpuMonitor.GetCpuInfo(), "Процессор", errors);
+                var memTask = RunSafe(() => _memoryMonitor.GetMemoryInfo(), "Память", errors);
+                var diskTask = RunSafe(() => _diskMonitor.GetDiskInfo(), "Диски", errors);
+                var videoTask = RunSafe(() => _videoMonitor.GetVideoInfo(), "Видеокарта", errors);
+                var netTask = RunSafe(() => _networkMonitor.GetNetworkAdapters(), "Сеть", errors);
+                var sysTask = RunSafe(() => _systemInfoService.GetSystemInfo(), "Система", errors);
+                var procTask = RunSafe(() => _processMonitor.GetProcesses(), "Процессы", errors);
 
                 await Task.WhenAll(cpuTask, memTask, diskTask, videoTask, netTask, sysTask, procTask);
+                stopwatch.Stop();
 
-                CpuInfo = await cpuTask;
-                MemoryInfo = await memTask;
-                DiskInfo = await diskTask;
-                VideoInfo = await videoTask;
-                NetworkAdapters = await netTask;
-                SystemInfo = await sysTask;
+                // После await мы снова в UI-потоке, поэтому свойства можно менять напрямую.
+                // Если компонент не удалось обновить, оставляем предыдущие данные
+                CpuInfo = cpuTask.Result ?? CpuInfo;
+                MemoryInfo = memTask.Result ?? MemoryInfo;
+                DiskInfo = diskTask.Result ?? DiskInfo;
+                VideoInfo = videoTask.Result ?? VideoInfo;
+                NetworkAdapters = netTask.Result ?? NetworkAdapters;
+                SystemInfo = sysTask.Result ?? SystemInfo;
 
-                var newProcesses = await procTask;
+                if (procTask.Result != null)
+                    UpdateProcesses(procTask.Result);
 
-                // Обновляем коллекцию процессов в UI-потоке
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    int? selectedId = SelectedProcess?.Id;
-                    Processes.Clear();
-                    foreach (var p in newProcesses)
-                        Processes.Add(p);
-                    if (selectedId.HasValue)
-                        SelectedProcess = Processes.FirstOrDefault(p => p.Id == selectedId.Value);
-                });
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка обновления данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (cpuTask.Result != null)
+                    AddCpuPoint(cpuTask.Result.LoadPercentage);
+
+                UpdateRefreshStats(stopwatch.ElapsedMilliseconds);
+
+                HasErrors = errors.Count > 0;
+                StatusText = HasErrors
+                    ? "Ошибки: " + string.Join("; ", errors)
+                    : $"Обновлено в {DateTime.Now:HH:mm:ss}";
             }
             finally
             {
                 _isRefreshing = false;
             }
+        }
+
+        // Обновление списка процессов с сохранением выделенного процесса
+        private void UpdateProcesses(List<ProcessInfoModel> newProcesses)
+        {
+            int? selectedId = SelectedProcess?.Id;
+            Processes.Clear();
+            foreach (var p in newProcesses)
+                Processes.Add(p);
+            if (selectedId.HasValue)
+                SelectedProcess = Processes.FirstOrDefault(p => p.Id == selectedId.Value);
+        }
+
+        // Добавление точки на график загрузки CPU (храним последние ChartPoints значений)
+        private void AddCpuPoint(double load)
+        {
+            _cpuHistory.Add(load);
+            if (_cpuHistory.Count > ChartPoints)
+                _cpuHistory.RemoveAt(0);
+
+            var points = new PointCollection();
+            double step = ChartWidth / (ChartPoints - 1);
+            // Последняя точка всегда у правого края, старые сдвигаются влево
+            int offset = ChartPoints - _cpuHistory.Count;
+            for (int i = 0; i < _cpuHistory.Count; i++)
+            {
+                double x = (offset + i) * step;
+                double y = ChartHeight - _cpuHistory[i] / 100.0 * ChartHeight;
+                points.Add(new Point(x, y));
+            }
+            CpuChartPoints = points;
+        }
+
+        // Статистика времени полного цикла обновления (нужна для таблицы производительности в отчёте)
+        private void UpdateRefreshStats(long elapsedMs)
+        {
+            _refreshTimes.Add(elapsedMs);
+            if (_refreshTimes.Count > 50)
+                _refreshTimes.RemoveAt(0);
+
+            RefreshStats = $"Обновление: {elapsedMs} мс (среднее {_refreshTimes.Average():F0} мс, " +
+                           $"мин {_refreshTimes.Min()} мс, макс {_refreshTimes.Max()} мс, замеров: {_refreshTimes.Count})";
         }
 
         // Завершение выбранного процесса
@@ -187,10 +317,7 @@ namespace HardwareMonitor.ViewModels
 
             MessageBoxResult result = MessageBox.Show(
                 $"Завершить процесс \"{processName}\" (ID: {processId})?",
-                "Подтверждение",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
+                "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result != MessageBoxResult.Yes)
                 return;
 
@@ -199,142 +326,148 @@ namespace HardwareMonitor.ViewModels
                 Process proc = Process.GetProcessById(processId);
                 proc.Kill();
                 MessageBox.Show($"Процесс \"{processName}\" завершён.", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
-                _ = RefreshDataAsync(); // Обновить список
+                _ = RefreshDataAsync();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Не удалось завершить процесс: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        #region Экспорт
+
+        private static string Mb(long bytes) => (bytes / 1024.0 / 1024.0).ToString("N0");
+        private static string Gb(long bytes) => (bytes / 1024.0 / 1024.0 / 1024.0).ToString("N2");
+
+        // Все данные о системе в виде строк «раздел — параметр — значение».
+        // Используется и для TXT, и для CSV, чтобы содержимое отчётов совпадало
+        private List<string[]> BuildReportRows()
+        {
+            var rows = new List<string[]>();
+            void Add(string section, string name, object value) => rows.Add(new[] { section, name, value?.ToString() ?? "" });
+
+            Add("Процессор", "Название", CpuInfo?.Name);
+            Add("Процессор", "Производитель", CpuInfo?.Manufacturer);
+            Add("Процессор", "Архитектура", CpuInfo?.Architecture);
+            Add("Процессор", "Ядер", CpuInfo?.CoreCount);
+            Add("Процессор", "Потоков", CpuInfo?.ThreadCount);
+            Add("Процессор", "Базовая частота, МГц", CpuInfo?.BaseFrequency);
+            Add("Процессор", "Текущая частота, МГц", CpuInfo?.CurrentFrequency);
+            Add("Процессор", "Загрузка, %", CpuInfo?.LoadPercentage.ToString("F1"));
+
+            if (MemoryInfo != null)
+            {
+                Add("Память", "Всего, МБ", Mb(MemoryInfo.TotalMemoryBytes));
+                Add("Память", "Используется, МБ", Mb(MemoryInfo.UsedMemoryBytes));
+                Add("Память", "Доступно, МБ", Mb(MemoryInfo.AvailableMemoryBytes));
+                Add("Память", "Использование, %", MemoryInfo.UsagePercentage.ToString("F1"));
+                int n = 1;
+                foreach (var m in MemoryInfo.Modules)
+                    Add("Память", $"Модуль {n++}", $"{m.Manufacturer}, {Mb(m.CapacityBytes)} МБ, {m.SpeedMHz} МГц");
+            }
+
+            foreach (var d in DiskInfo?.PhysicalDisks ?? new List<PhysicalDiskInfo>())
+                Add("Физический диск", d.Model, $"{Gb(d.SizeBytes)} ГБ, {d.MediaType}");
+            foreach (var d in DiskInfo?.LogicalDisks ?? new List<LogicalDiskInfo>())
+                Add("Логический диск", d.DriveLetter,
+                    $"всего {Gb(d.TotalSizeBytes)} ГБ, свободно {Gb(d.FreeSizeBytes)} ГБ, занято {d.UsagePercent:F1}%, {d.FileSystem}");
+
+            Add("Видеокарта", "Название", VideoInfo?.Name);
+            Add("Видеокарта", "Видеопамять, МБ", VideoInfo == null ? "" : Mb(VideoInfo.VideoMemoryBytes));
+            Add("Видеокарта", "Версия драйвера", VideoInfo?.DriverVersion);
+            Add("Видеокарта", "Разрешение", VideoInfo?.VideoModeDescription);
+            Add("Видеокарта", "Частота обновления, Гц", VideoInfo?.CurrentRefreshRate);
+
+            foreach (var a in NetworkAdapters ?? new List<NetworkAdapterInfo>())
+                Add("Сеть", a.Name, $"MAC {a.MacAddress}, {(a.IsConnected ? "подключён" : "отключён")}, {a.SpeedMbps:N0} Мбит/с");
+
+            Add("Система", "ОС", SystemInfo?.OsName);
+            Add("Система", "Версия", SystemInfo?.OsVersion);
+            Add("Система", "Архитектура", SystemInfo?.Architecture);
+            Add("Система", "Имя компьютера", SystemInfo?.ComputerName);
+            Add("Система", "Пользователь", SystemInfo?.UserName);
+            return rows;
+        }
+
+        private static string AskFileName(string filter, string defaultName)
+        {
+            var dialog = new SaveFileDialog { Filter = filter, FileName = defaultName };
+            return dialog.ShowDialog() == true ? dialog.FileName : null;
+        }
+
         private void ExportToTxt()
         {
-            var dialog = new SaveFileDialog
-            {
-                Filter = "Text files (*.txt)|*.txt",
-                FileName = $"HardwareReport_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.txt"
-            };
-
-            if (dialog.ShowDialog() != true) return;
-
+            string file = AskFileName("Текстовый файл (*.txt)|*.txt", $"HardwareReport_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.txt");
+            if (file == null) return;
             try
             {
-                using (var writer = new StreamWriter(dialog.FileName, false, Encoding.UTF8))
+                using (var writer = new StreamWriter(file, false, Encoding.UTF8))
                 {
                     writer.WriteLine("=== ОТЧЁТ О СОСТОЯНИИ СИСТЕМЫ ===");
                     writer.WriteLine($"Дата: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                    writer.WriteLine();
-
-                    writer.WriteLine("--- ПРОЦЕССОР ---");
-                    writer.WriteLine($"Название: {CpuInfo?.Name}");
-                    writer.WriteLine($"Производитель: {CpuInfo?.Manufacturer}");
-                    writer.WriteLine($"Архитектура: {CpuInfo?.Architecture}");
-                    writer.WriteLine($"Ядер: {CpuInfo?.CoreCount}");
-                    writer.WriteLine($"Потоков: {CpuInfo?.ThreadCount}");
-                    writer.WriteLine($"Базовая частота: {CpuInfo?.BaseFrequency} МГц");
-                    writer.WriteLine($"Загрузка: {CpuInfo?.LoadPercentage:F1}%");
-                    writer.WriteLine();
-
-                    writer.WriteLine("--- ПАМЯТЬ ---");
-                    writer.WriteLine($"Всего: {MemoryInfo?.TotalMemoryBytes / (1024 * 1024):N0} МБ");
-                    writer.WriteLine($"Доступно: {MemoryInfo?.AvailableMemoryBytes / (1024 * 1024):N0} МБ");
-                    writer.WriteLine($"Использовано: {MemoryInfo?.UsagePercentage:F1}%");
-                    writer.WriteLine("Модули памяти:");
-                    if (MemoryInfo?.Modules != null && MemoryInfo.Modules.Count > 0)
+                    string section = null;
+                    foreach (var row in BuildReportRows())
                     {
-                        foreach (var module in MemoryInfo.Modules)
+                        if (row[0] != section)
                         {
-                            writer.WriteLine($"  {module.Manufacturer} - {module.CapacityBytes / (1024 * 1024):N0} МБ - {module.SpeedMHz} МГц");
+                            section = row[0];
+                            writer.WriteLine();
+                            writer.WriteLine($"--- {section.ToUpper()} ---");
                         }
+                        writer.WriteLine($"{row[1].TrimEnd(':')}: {row[2]}");
                     }
-                    else writer.WriteLine("  Нет данных");
-                    writer.WriteLine();
-
-                    writer.WriteLine("--- ДИСКИ ---");
-                    writer.WriteLine("Физические диски:");
-                    foreach (var disk in DiskInfo?.PhysicalDisks ?? new List<PhysicalDiskInfo>())
-                    {
-                        writer.WriteLine($"  {disk.Model} - {disk.SizeBytes / (1024 * 1024 * 1024):N2} ГБ - {disk.MediaType}");
-                    }
-                    writer.WriteLine("Логические диски:");
-                    foreach (var disk in DiskInfo?.LogicalDisks ?? new List<LogicalDiskInfo>())
-                    {
-                        writer.WriteLine($"  {disk.DriveLetter} - {disk.TotalSizeBytes / (1024 * 1024 * 1024):N2} ГБ всего, {disk.FreeSizeBytes / (1024 * 1024 * 1024):N2} ГБ свободно ({disk.UsagePercent:F1}% занято) - {disk.FileSystem}");
-                    }
-                    writer.WriteLine();
-
-                    writer.WriteLine("--- ВИДЕОКАРТА ---");
-                    writer.WriteLine($"Название: {VideoInfo?.Name}");
-                    writer.WriteLine($"Память: {VideoInfo?.VideoMemoryBytes / (1024 * 1024):N0} МБ");
-                    writer.WriteLine($"Драйвер: {VideoInfo?.DriverVersion}");
-                    writer.WriteLine($"Разрешение: {VideoInfo?.VideoModeDescription}");
-                    writer.WriteLine();
-
-                    writer.WriteLine("--- СЕТЕВЫЕ АДАПТЕРЫ ---");
-                    foreach (var net in NetworkAdapters ?? new List<NetworkAdapterInfo>())
-                    {
-                        writer.WriteLine($"  {net.Name} - MAC: {net.MacAddress} - Подключен: {net.IsConnected} - Скорость: {net.SpeedBitsPerSec / 1_000_000} Мбит/с");
-                    }
-                    writer.WriteLine();
-
-                    writer.WriteLine("--- СИСТЕМА ---");
-                    writer.WriteLine($"ОС: {SystemInfo?.OsName}");
-                    writer.WriteLine($"Версия: {SystemInfo?.OsVersion}");
-                    writer.WriteLine($"Архитектура: {SystemInfo?.Architecture}");
-                    writer.WriteLine($"Компьютер: {SystemInfo?.ComputerName}");
-                    writer.WriteLine($"Пользователь: {SystemInfo?.UserName}");
                 }
-
-                MessageBox.Show($"Отчёт успешно сохранён: {dialog.FileName}", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"Отчёт сохранён: {file}", "Экспорт TXT", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при экспорте: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        // CSV с разделителем «;» — так его правильно открывает русский Excel.
+        // Кодировка UTF-8 с BOM, чтобы Excel не испортил кириллицу
         private void ExportToCsv()
         {
-            var dialog = new SaveFileDialog
-            {
-                Filter = "CSV files (*.csv)|*.csv",
-                FileName = $"Processes_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.csv"
-            };
-
-            if (dialog.ShowDialog() != true) return;
-
+            string file = AskFileName("CSV для Excel (*.csv)|*.csv", $"HardwareReport_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.csv");
+            if (file == null) return;
             try
             {
-                using (var writer = new StreamWriter(dialog.FileName, false, Encoding.UTF8))
+                using (var writer = new StreamWriter(file, false, new UTF8Encoding(true)))
                 {
-                    // Заголовки
+                    writer.WriteLine("Раздел;Параметр;Значение");
+                    foreach (var row in BuildReportRows())
+                        writer.WriteLine(string.Join(";", row.Select(CsvEscape)));
+
+                    writer.WriteLine();
+                    writer.WriteLine("Процессы");
                     writer.WriteLine("ID;Имя;Статус;CPU %;Память (МБ)");
-
-                    // Данные
-                    foreach (var proc in Processes)
-                    {
-                        writer.WriteLine($"{proc.Id};{proc.Name};{proc.Status};{proc.CpuUsage:F1};{proc.MemoryMB:F2}");
-                    }
+                    foreach (var p in Processes)
+                        writer.WriteLine($"{p.Id};{CsvEscape(p.Name)};{p.Status};{p.CpuUsage:F1};{p.MemoryMB:F1}");
                 }
-
-                MessageBox.Show($"Данные процессов сохранены в CSV: {dialog.FileName}", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"Данные сохранены в CSV: {file}", "Экспорт CSV", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при экспорте CSV: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        // Экранирование значения для CSV: если есть ; или кавычки — берём в кавычки
+        private static string CsvEscape(string value)
+        {
+            if (value == null) return "";
+            if (value.Contains(";") || value.Contains("\"") || value.Contains("\n"))
+                return "\"" + value.Replace("\"", "\"\"") + "\"";
+            return value;
+        }
+
         private void ExportToJson()
         {
-            var dialog = new SaveFileDialog
-            {
-                Filter = "JSON files (*.json)|*.json",
-                FileName = $"HardwareReport_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.json"
-            };
-
-            if (dialog.ShowDialog() != true) return;
-
+            string file = AskFileName("JSON (*.json)|*.json", $"HardwareReport_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.json");
+            if (file == null) return;
             try
             {
-                // Создаём объект для сериализации
                 var exportData = new
                 {
                     ExportDate = DateTime.Now,
@@ -342,6 +475,7 @@ namespace HardwareMonitor.ViewModels
                     Memory = new
                     {
                         TotalMemoryMB = MemoryInfo?.TotalMemoryBytes / (1024 * 1024),
+                        UsedMemoryMB = MemoryInfo?.UsedMemoryBytes / (1024 * 1024),
                         AvailableMemoryMB = MemoryInfo?.AvailableMemoryBytes / (1024 * 1024),
                         UsagePercent = MemoryInfo?.UsagePercentage,
                         Modules = MemoryInfo?.Modules
@@ -354,14 +488,7 @@ namespace HardwareMonitor.ViewModels
                     Video = VideoInfo,
                     Network = NetworkAdapters,
                     System = SystemInfo,
-                    Processes = Processes.Select(p => new
-                    {
-                        p.Id,
-                        p.Name,
-                        p.Status,
-                        p.CpuUsage,
-                        MemoryMB = p.MemoryMB
-                    })
+                    Processes = Processes.Select(p => new { p.Id, p.Name, p.Status, p.CpuUsage, p.MemoryMB })
                 };
 
                 var settings = new JsonSerializerSettings
@@ -369,17 +496,15 @@ namespace HardwareMonitor.ViewModels
                     Formatting = Formatting.Indented,
                     Culture = System.Globalization.CultureInfo.InvariantCulture
                 };
-                string json = JsonConvert.SerializeObject(exportData, settings);
-                File.WriteAllText(dialog.FileName, json, Encoding.UTF8);
-
-                MessageBox.Show($"Данные сохранены в JSON: {dialog.FileName}", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                File.WriteAllText(file, JsonConvert.SerializeObject(exportData, settings), Encoding.UTF8);
+                MessageBox.Show($"Данные сохранены в JSON: {file}", "Экспорт JSON", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при экспорте JSON: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        #endregion
     }
-
-
 }

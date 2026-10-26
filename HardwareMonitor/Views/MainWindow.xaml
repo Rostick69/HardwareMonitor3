@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:HardwareMonitor.ViewModels"
         xmlns:conv="clr-namespace:HardwareMonitor.Converters"
-        Title="Hardware Monitor" Height="700" Width="1000"
+        Title="Hardware Monitor" Height="720" Width="1000" Language="ru-RU"
         WindowStartupLocation="CenterScreen">
 
     <Window.DataContext>
@@ -13,21 +13,37 @@
     <Window.Resources>
         <conv:BytesToMBConverter x:Key="BytesToMB" />
         <conv:BytesToGBConverter x:Key="BytesToGB" />
+
+        <!-- Общий стиль подписей параметров -->
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style x:Key="Value" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Панель с кнопками -->
-        <StackPanel Orientation="Horizontal" Grid.Row="0">
-            <Button Content="Обновить" Width="120" Height="35" Command="{Binding RefreshCommand}" Background="#2563EB" Foreground="White"/>
-            <Button Content="Экспорт TXT" Width="120" Height="35" Margin="10,0,0,0" Command="{Binding ExportTxtCommand}" Background="#10B981" Foreground="White"/>
-            <Button Content="Экспорт CSV" Width="120" Height="35" Margin="10,0,0,0" Command="{Binding ExportCsvCommand}" Background="#F59E0B" Foreground="White"/>
-            <Button Content="Экспорт JSON" Width="120" Height="35" Margin="10,0,0,0" Command="{Binding ExportJsonCommand}" Background="#3B82F6" Foreground="White"/>
-        </StackPanel>
+        <!-- Панель с кнопками и настройками обновления -->
+        <DockPanel Grid.Row="0" LastChildFill="False">
+            <Button Content="Обновить" Width="110" Height="35" Command="{Binding RefreshCommand}" Background="#2563EB" Foreground="White"/>
+            <Button Content="Экспорт TXT" Width="110" Height="35" Margin="10,0,0,0" Command="{Binding ExportTxtCommand}" Background="#10B981" Foreground="White"/>
+            <Button Content="Экспорт CSV" Width="110" Height="35" Margin="10,0,0,0" Command="{Binding ExportCsvCommand}" Background="#F59E0B" Foreground="White"/>
+            <Button Content="Экспорт JSON" Width="110" Height="35" Margin="10,0,0,0" Command="{Binding ExportJsonCommand}" Background="#3B82F6" Foreground="White"/>
+
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <CheckBox Content="Автообновление каждые" IsChecked="{Binding IsAutoRefresh}" VerticalAlignment="Center"/>
+                <ComboBox ItemsSource="{Binding IntervalOptions}" SelectedItem="{Binding SelectedInterval}"
+                          Width="55" Margin="6,0" IsEnabled="{Binding IsAutoRefresh}"/>
+                <TextBlock Text="с" VerticalAlignment="Center"/>
+            </StackPanel>
+        </DockPanel>
 
         <!-- Вкладки -->
         <TabControl Grid.Row="1" Margin="0,10,0,0">
@@ -35,28 +51,52 @@
             <TabItem Header="Процессор">
                 <ScrollViewer>
                     <StackPanel Margin="10">
-                        <TextBlock Text="Название:" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding CpuInfo.Name}" Margin="0,0,0,10"/>
+                        <TextBlock Text="Название:" Style="{StaticResource Caption}"/>
+                        <TextBlock Text="{Binding CpuInfo.Name}" Style="{StaticResource Value}"/>
 
-                        <TextBlock Text="Производитель:" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding CpuInfo.Manufacturer}" Margin="0,0,0,10"/>
+                        <TextBlock Text="Производитель:" Style="{StaticResource Caption}"/>
+                        <TextBlock Text="{Binding CpuInfo.Manufacturer}" Style="{StaticResource Value}"/>
 
-                        <TextBlock Text="Архитектура:" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding CpuInfo.Architecture}" Margin="0,0,0,10"/>
+                        <TextBlock Text="Архитектура:" Style="{StaticResource Caption}"/>
+                        <TextBlock Text="{Binding CpuInfo.Architecture}" Style="{StaticResource Value}"/>
 
-                        <TextBlock Text="Ядер:" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding CpuInfo.CoreCount}" Margin="0,0,0,10"/>
+                        <TextBlock Text="Ядер / потоков:" Style="{StaticResource Caption}"/>
+                        <TextBlock Style="{StaticResource Value}">
+                            <Run Text="{Binding CpuInfo.CoreCount, Mode=OneWay}"/> / <Run Text="{Binding CpuInfo.ThreadCount, Mode=OneWay}"/>
+                        </TextBlock>
 
-                        <TextBlock Text="Потоков:" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding CpuInfo.ThreadCount}" Margin="0,0,0,10"/>
+                        <TextBlock Text="Базовая / текущая частота (МГц):" Style="{StaticResource Caption}"/>
+                        <TextBlock Style="{StaticResource Value}">
+                            <Run Text="{Binding CpuInfo.BaseFrequency, Mode=OneWay}"/> / <Run Text="{Binding CpuInfo.CurrentFrequency, Mode=OneWay}"/>
+                        </TextBlock>
 
-                        <TextBlock Text="Базовая частота (МГц):" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding CpuInfo.BaseFrequency}" Margin="0,0,0,10"/>
+                        <TextBlock Text="Загрузка:" Style="{StaticResource Caption}"/>
+                        <ProgressBar Value="{Binding CpuInfo.LoadPercentage, Mode=OneWay}" Maximum="100" Height="20" Margin="0,5,0,5"/>
+                        <TextBlock Text="{Binding CpuInfo.LoadPercentage, StringFormat={}{0:F1}%}" HorizontalAlignment="Center"/>
 
-                        <TextBlock Text="Загрузка:" FontWeight="Bold"/>
-                        <ProgressBar Value="{Binding CpuInfo.LoadPercentage}" Maximum="100" Height="20" Margin="0,5,0,5"/>
-                        <TextBlock Text="{Binding CpuInfo.LoadPercentage, StringFormat={}{0:F1}%}" 
-                                   HorizontalAlignment="Center"/>
+                        <!-- График загрузки процессора в реальном времени (последние 60 замеров) -->
+                        <TextBlock Text="График загрузки CPU (последние 60 замеров):" Style="{StaticResource Caption}" Margin="0,15,0,5"/>
+                        <Grid HorizontalAlignment="Left">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <!-- Подписи шкалы -->
+                            <Canvas Grid.Column="0" Width="40" Height="150">
+                                <TextBlock Text="100%" Canvas.Top="-8" FontSize="10"/>
+                                <TextBlock Text="50%" Canvas.Top="67" FontSize="10"/>
+                                <TextBlock Text="0%" Canvas.Top="142" FontSize="10"/>
+                            </Canvas>
+                            <Border Grid.Column="1" BorderBrush="Gray" BorderThickness="1" Background="#F8FAFC">
+                                <Canvas Width="600" Height="150" ClipToBounds="True">
+                                    <!-- Линии сетки: 25%, 50%, 75% -->
+                                    <Line X1="0" Y1="37.5" X2="600" Y2="37.5" Stroke="#E2E8F0"/>
+                                    <Line X1="0" Y1="75" X2="600" Y2="75" Stroke="#CBD5E1"/>
+                                    <Line X1="0" Y1="112.5" X2="600" Y2="112.5" Stroke="#E2E8F0"/>
+                                    <Polyline Points="{Binding CpuChartPoints}" Stroke="#2563EB" StrokeThickness="2"/>
+                                </Canvas>
+                            </Border>
+                        </Grid>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -65,25 +105,28 @@
             <TabItem Header="Память">
                 <ScrollViewer>
                     <StackPanel Margin="10">
-                        <TextBlock Text="Общий объём (МБ):" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding MemoryInfo.TotalMemoryBytes, Converter={StaticResource BytesToMB}}" Margin="0,0,0,10"/>
+                        <TextBlock Text="Общий объём (МБ):" Style="{StaticResource Caption}"/>
+                        <TextBlock Text="{Binding MemoryInfo.TotalMemoryBytes, Converter={StaticResource BytesToMB}}" Style="{StaticResource Value}"/>
 
-                        <TextBlock Text="Доступно (МБ):" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding MemoryInfo.AvailableMemoryBytes, Converter={StaticResource BytesToMB}}" Margin="0,0,0,10"/>
+                        <TextBlock Text="Используется (МБ):" Style="{StaticResource Caption}"/>
+                        <TextBlock Text="{Binding MemoryInfo.UsedMemoryBytes, Mode=OneWay, Converter={StaticResource BytesToMB}}" Style="{StaticResource Value}"/>
 
-                        <TextBlock Text="Использовано:" FontWeight="Bold"/>
+                        <TextBlock Text="Доступно (МБ):" Style="{StaticResource Caption}"/>
+                        <TextBlock Text="{Binding MemoryInfo.AvailableMemoryBytes, Converter={StaticResource BytesToMB}}" Style="{StaticResource Value}"/>
+
+                        <TextBlock Text="Использовано:" Style="{StaticResource Caption}"/>
                         <ProgressBar Value="{Binding MemoryInfo.UsagePercentage, Mode=OneWay}" Maximum="100" Height="20" Margin="0,5,0,5"/>
                         <TextBlock Text="{Binding MemoryInfo.UsagePercentage, StringFormat={}{0:F1}%}" HorizontalAlignment="Center"/>
 
-                        <TextBlock Text="Модули памяти:" FontWeight="Bold" Margin="0,10,0,5"/>
+                        <TextBlock Text="Модули памяти:" Style="{StaticResource Caption}" Margin="0,10,0,5"/>
                         <ItemsControl ItemsSource="{Binding MemoryInfo.Modules}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border BorderBrush="Gray" BorderThickness="0,0,0,1" Padding="3" Margin="0,2">
                                         <StackPanel>
                                             <TextBlock Text="{Binding Manufacturer}" FontWeight="SemiBold"/>
-                                            <TextBlock>Объём: <Run Text="{Binding CapacityBytes, Converter={StaticResource BytesToMB}}"/> МБ</TextBlock>
-                                            <TextBlock>Скорость: <Run Text="{Binding SpeedMHz}"/> МГц</TextBlock>
+                                            <TextBlock>Объём: <Run Text="{Binding CapacityBytes, Mode=OneWay, Converter={StaticResource BytesToMB}}"/> МБ</TextBlock>
+                                            <TextBlock>Скорость: <Run Text="{Binding SpeedMHz, Mode=OneWay}"/> МГц</TextBlock>
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>
@@ -97,33 +140,40 @@
             <TabItem Header="Диски">
                 <ScrollViewer>
                     <StackPanel Margin="10">
-                        <TextBlock Text="Физические диски:" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <TextBlock Text="Физические диски:" Style="{StaticResource Caption}" Margin="0,0,0,5"/>
                         <ItemsControl ItemsSource="{Binding DiskInfo.PhysicalDisks}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Margin="0,2">
-                                        <TextBlock Text="{Binding Model}" Width="200"/>
-                                        <TextBlock Text="{Binding SizeBytes, Converter={StaticResource BytesToGB}}" Width="80"/>
-                                        <TextBlock Text="ГБ" Width="30"/>
-                                        <TextBlock Text="{Binding MediaType}" Width="100"/>
+                                        <TextBlock Text="{Binding Model}" Width="300"/>
+                                        <TextBlock Text="{Binding SizeBytes, Converter={StaticResource BytesToGB}}" Width="80" TextAlignment="Right"/>
+                                        <TextBlock Text=" ГБ" Width="40"/>
+                                        <TextBlock Text="{Binding MediaType}" Width="200"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <TextBlock Text="Логические диски:" FontWeight="Bold" Margin="0,10,0,5"/>
+                        <TextBlock Text="Логические диски:" Style="{StaticResource Caption}" Margin="0,15,0,5"/>
                         <ItemsControl ItemsSource="{Binding DiskInfo.LogicalDisks}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Margin="0,2">
-                                        <TextBlock Text="{Binding DriveLetter}" Width="50"/>
-                                        <TextBlock Text="{Binding TotalSizeBytes, Converter={StaticResource BytesToGB}}" Width="80"/>
-                                        <TextBlock Text="ГБ всего" Width="70"/>
-                                        <TextBlock Text="{Binding FreeSizeBytes, Converter={StaticResource BytesToGB}}" Width="80"/>
-                                        <TextBlock Text="ГБ своб" Width="70"/>
-                                        <TextBlock Text="{Binding UsagePercent, StringFormat={}{0:F1}%}" Width="60"/>
-                                        <TextBlock Text="{Binding FileSystem}" Width="80"/>
-                                    </StackPanel>
+                                    <Border BorderBrush="Gray" BorderThickness="0,0,0,1" Padding="3" Margin="0,2">
+                                        <StackPanel>
+                                            <TextBlock>
+                                                <Run Text="{Binding DriveLetter, Mode=OneWay}" FontWeight="Bold"/>
+                                                <Run Text="  "/>
+                                                <Run Text="{Binding FileSystem, Mode=OneWay}"/>
+                                                <Run Text="   всего "/><Run Text="{Binding TotalSizeBytes, Mode=OneWay, Converter={StaticResource BytesToGB}}"/><Run Text=" ГБ, свободно "/>
+                                                <Run Text="{Binding FreeSizeBytes, Mode=OneWay, Converter={StaticResource BytesToGB}}"/><Run Text=" ГБ"/>
+                                            </TextBlock>
+                                            <!-- Индикатор заполнения диска -->
+                                            <Grid Margin="0,4,0,2">
+                                                <ProgressBar Value="{Binding UsagePercent, Mode=OneWay}" Maximum="100" Height="18"/>
+                                                <TextBlock Text="{Binding UsagePercent, StringFormat=Занято {0:F1}%}" HorizontalAlignment="Center" FontSize="11"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
@@ -134,20 +184,20 @@
             <!-- Вкладка Видеокарта -->
             <TabItem Header="Видеокарта">
                 <StackPanel Margin="10">
-                    <TextBlock Text="Название:" FontWeight="Bold"/>
-                    <TextBlock Text="{Binding VideoInfo.Name}" Margin="0,0,0,10"/>
+                    <TextBlock Text="Название:" Style="{StaticResource Caption}"/>
+                    <TextBlock Text="{Binding VideoInfo.Name}" Style="{StaticResource Value}"/>
 
-                    <TextBlock Text="Объём памяти (МБ):" FontWeight="Bold"/>
-                    <TextBlock Text="{Binding VideoInfo.VideoMemoryBytes, Converter={StaticResource BytesToMB}}" Margin="0,0,0,10"/>
+                    <TextBlock Text="Объём памяти (МБ):" Style="{StaticResource Caption}"/>
+                    <TextBlock Text="{Binding VideoInfo.VideoMemoryBytes, Converter={StaticResource BytesToMB}}" Style="{StaticResource Value}"/>
 
-                    <TextBlock Text="Версия драйвера:" FontWeight="Bold"/>
-                    <TextBlock Text="{Binding VideoInfo.DriverVersion}" Margin="0,0,0,10"/>
+                    <TextBlock Text="Версия драйвера:" Style="{StaticResource Caption}"/>
+                    <TextBlock Text="{Binding VideoInfo.DriverVersion}" Style="{StaticResource Value}"/>
 
-                    <TextBlock Text="Разрешение:" FontWeight="Bold"/>
-                    <TextBlock Text="{Binding VideoInfo.VideoModeDescription}" Margin="0,0,0,10"/>
+                    <TextBlock Text="Разрешение:" Style="{StaticResource Caption}"/>
+                    <TextBlock Text="{Binding VideoInfo.VideoModeDescription}" Style="{StaticResource Value}"/>
 
-                    <TextBlock Text="Частота (Гц):" FontWeight="Bold"/>
-                    <TextBlock Text="{Binding VideoInfo.CurrentRefreshRate}" Margin="0,0,0,10"/>
+                    <TextBlock Text="Частота обновления (Гц):" Style="{StaticResource Caption}"/>
+                    <TextBlock Text="{Binding VideoInfo.CurrentRefreshRate}" Style="{StaticResource Value}"/>
                 </StackPanel>
             </TabItem>
 
@@ -161,9 +211,9 @@
                                     <Border BorderBrush="Gray" BorderThickness="0,0,0,1" Padding="5" Margin="0,2">
                                         <StackPanel>
                                             <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
-                                            <TextBlock>MAC: <Run Text="{Binding MacAddress}"/></TextBlock>
-                                            <TextBlock>Подключен: <Run Text="{Binding IsConnected}"/></TextBlock>
-                                            <TextBlock>Скорость (Мбит/с): <Run Text="{Binding SpeedBitsPerSec, StringFormat={}{0:N0}}"/></TextBlock>
+                                            <TextBlock>MAC: <Run Text="{Binding MacAddress, Mode=OneWay}"/></TextBlock>
+                                            <TextBlock>Подключен: <Run Text="{Binding ConnectedText, Mode=OneWay}"/></TextBlock>
+                                            <TextBlock>Скорость: <Run Text="{Binding SpeedMbps, Mode=OneWay, StringFormat={}{0:N0}}"/> Мбит/с</TextBlock>
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>
@@ -176,20 +226,20 @@
             <!-- Вкладка Система -->
             <TabItem Header="Система">
                 <StackPanel Margin="10">
-                    <TextBlock Text="ОС:" FontWeight="Bold"/>
-                    <TextBlock Text="{Binding SystemInfo.OsName}" Margin="0,0,0,10"/>
+                    <TextBlock Text="ОС:" Style="{StaticResource Caption}"/>
+                    <TextBlock Text="{Binding SystemInfo.OsName}" Style="{StaticResource Value}"/>
 
-                    <TextBlock Text="Версия:" FontWeight="Bold"/>
-                    <TextBlock Text="{Binding SystemInfo.OsVersion}" Margin="0,0,0,10"/>
+                    <TextBlock Text="Версия:" Style="{StaticResource Caption}"/>
+                    <TextBlock Text="{Binding SystemInfo.OsVersion}" Style="{StaticResource Value}"/>
 
-                    <TextBlock Text="Архитектура:" FontWeight="Bold"/>
-                    <TextBlock Text="{Binding SystemInfo.Architecture}" Margin="0,0,0,10"/>
+                    <TextBlock Text="Архитектура:" Style="{StaticResource Caption}"/>
+                    <TextBlock Text="{Binding SystemInfo.Architecture}" Style="{StaticResource Value}"/>
 
-                    <TextBlock Text="Имя компьютера:" FontWeight="Bold"/>
-                    <TextBlock Text="{Binding SystemInfo.ComputerName}" Margin="0,0,0,10"/>
+                    <TextBlock Text="Имя компьютера:" Style="{StaticResource Caption}"/>
+                    <TextBlock Text="{Binding SystemInfo.ComputerName}" Style="{StaticResource Value}"/>
 
-                    <TextBlock Text="Пользователь:" FontWeight="Bold"/>
-                    <TextBlock Text="{Binding SystemInfo.UserName}" Margin="0,0,0,10"/>
+                    <TextBlock Text="Пользователь:" Style="{StaticResource Caption}"/>
+                    <TextBlock Text="{Binding SystemInfo.UserName}" Style="{StaticResource Value}"/>
                 </StackPanel>
             </TabItem>
 
@@ -204,11 +254,11 @@
                     <DataGrid ItemsSource="{Binding Processes}" SelectedItem="{Binding SelectedProcess}"
                               AutoGenerateColumns="False" IsReadOnly="True" Grid.Row="0">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
-                            <DataGridTextColumn Header="Имя" Binding="{Binding Name}" Width="200"/>
-                            <DataGridTextColumn Header="Состояние" Binding="{Binding Status}" Width="100"/>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="70"/>
+                            <DataGridTextColumn Header="Имя" Binding="{Binding Name}" Width="220"/>
+                            <DataGridTextColumn Header="Состояние" Binding="{Binding Status}" Width="110"/>
                             <DataGridTextColumn Header="CPU %" Binding="{Binding CpuUsage, StringFormat={}{0:F1}}" Width="80"/>
-                            <DataGridTextColumn Header="Память (МБ)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}" Width="100"/>
+                            <DataGridTextColumn Header="Память (МБ)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}" Width="110"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
@@ -217,5 +267,22 @@
                 </Grid>
             </TabItem>
         </TabControl>
+
+        <!-- Строка состояния: время обновления и ошибки -->
+        <StackPanel Grid.Row="2" Margin="0,6,0,0">
+            <TextBlock Text="{Binding RefreshStats}" Foreground="#475569"/>
+            <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="#047857"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasErrors}" Value="True">
+                                <Setter Property="Foreground" Value="#DC2626"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </StackPanel>
     </Grid>
 </Window>
